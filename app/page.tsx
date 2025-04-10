@@ -28,8 +28,8 @@ export default function LowResViewer() {
     const deltaY = e.clientY - startPos.y;
     
     setDimensions({
-      width: Math.max(50, Math.min(200, startSize.width + deltaX)),
-      height: Math.max(50, Math.min(200, startSize.height + deltaY))
+      width: startSize.width + deltaX,
+      height: startSize.height + deltaY
     });
   };
 
@@ -84,7 +84,7 @@ export default function LowResViewer() {
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
               />
               <div
-                className="absolute bottom-0 right-0 w-4 h-4 bg-white cursor-se-resize"
+                className="absolute bottom-0 right-0 w-5 h-5 bg-white cursor-se-resize"
                 onMouseDown={handleMouseDown}
               />
             </div>
