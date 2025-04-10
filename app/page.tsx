@@ -1,17 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function LowResViewer() {
   const [url, setUrl] = useState("");
   const [submittedUrl, setSubmittedUrl] = useState("");
-  const [width, setWidth] = useState(100);
-  const [height, setHeight] = useState(100);
+  const [dimensions, setDimensions] = useState({ width: 100, height: 100 });
+  const [isResizing, setIsResizing] = useState(false);
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [startSize, setStartSize] = useState({ width: 0, height: 0 });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmittedUrl(url);
   };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsResizing(true);
+    setStartPos({ x: e.clientX, y: e.clientY });
+    setStartSize({ width: dimensions.width, height: dimensions.height });
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+    
+    const deltaX = e.clientX - startPos.x;
+    const deltaY = e.clientY - startPos.y;
+    
+    setDimensions({
+      width: Math.max(50, Math.min(200, startSize.width + deltaX)),
+      height: Math.max(50, Math.min(200, startSize.height + deltaY))
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsResizing(false);
+  };
+
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, startPos, startSize]);
 
   return (
     <div className="p-4 space-y-4 max-w-4xl mx-auto">
@@ -28,46 +63,29 @@ export default function LowResViewer() {
       </form>
 
       {submittedUrl && (
-        <div className="space-y-4">
-          <div className="flex gap-4">
-            <div className="flex items-center gap-2">
-              <label>Width:</label>
-              <input
-                type="range"
-                min="50"
-                max="200"
-                value={width}
-                onChange={(e) => setWidth(Number(e.target.value))}
-                className="w-32"
-              />
-              <span>{width}%</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <label>Height:</label>
-              <input
-                type="range"
-                min="50"
-                max="200"
-                value={height}
-                onChange={(e) => setHeight(Number(e.target.value))}
-                className="w-32"
-              />
-              <span>{height}%</span>
-            </div>
-          </div>
-          <div className="w-full border rounded overflow-hidden p-6">
-            <div className="relative w-full h-[720px] overflow-hidden bg-black">
+        <div className="w-full border rounded overflow-hidden p-6">
+          <div className="relative w-full h-[720px] overflow-hidden bg-black">
+            <div
+              className="absolute top-0 left-0"
+              style={{
+                width: `${dimensions.width}%`,
+                height: `${dimensions.height}%`,
+                cursor: isResizing ? 'grabbing' : 'grab'
+              }}
+            >
               <iframe
                 src={submittedUrl}
-                className="absolute top-0 left-0 w-[200%] h-[200%] scale-[0.5] transform origin-top-left"
+                className="w-full h-full"
                 style={{
                   filter: "blur(0.7px) contrast(0.9)",
                   imageRendering: "pixelated",
                   pointerEvents: "auto",
-                  width: `${width}%`,
-                  height: `${height}%`,
                 }}
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+              />
+              <div
+                className="absolute bottom-0 right-0 w-4 h-4 bg-white cursor-se-resize"
+                onMouseDown={handleMouseDown}
               />
             </div>
           </div>
